@@ -1,0 +1,16 @@
+#story-down-orig,
+#story-down-img {
+    position: absolute;
+    top: 0;
+    font-size: 40%;
+    height: 20px;
+    background: black;
+    color: white;
+    border: none;
+}
+#story-down-orig {
+    left: 0;
+}
+#story-down-img {
+    left: 60px;
+}
