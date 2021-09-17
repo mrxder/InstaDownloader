@@ -116,21 +116,17 @@ if (typeof hasAlreadyBeenDecleared === 'undefined') {
         while (articleNode.nodeName !== 'ARTICLE') {
             articleNode = articleNode.parentNode;
         }
-        let usernameObj = articleNode.childNodes[0].childNodes[1].childNodes[0];
-        while (usernameObj.nodeName !== 'A') {
-            usernameObj = usernameObj.childNodes[0];
-        }
+        let aTagsInArticle = articleNode.querySelectorAll('header a');
+        let usernameObj = aTagsInArticle[1];
 
         if (request.target === 'img') {
             const imgNode =
                 lastContextMenuClick.parentNode.childNodes[0].childNodes[0];
             if (imgNode.nodeName === 'IMG') {
-                const srcArray = imgNode.attributes['srcset'].textContent.split(
-                    ' '
-                );
-                const srcToDownload = srcArray[srcArray.length - 2].split(
-                    ','
-                )[1];
+                const srcArray =
+                    imgNode.attributes['srcset'].textContent.split(' ');
+                const srcToDownload =
+                    srcArray[srcArray.length - 2].split(',')[1];
                 sendResponse({
                     success: true,
                     url: srcToDownload,
@@ -149,9 +145,8 @@ if (typeof hasAlreadyBeenDecleared === 'undefined') {
                 }
             }
 
-            const innerParts = allScriptsArray[tOfScripts].innerText.split(
-                'BaseURL'
-            );
+            const innerParts =
+                allScriptsArray[tOfScripts].innerText.split('BaseURL');
 
             let tOfParts = 0;
             for (; tOfParts < innerParts.length; tOfParts++) {
