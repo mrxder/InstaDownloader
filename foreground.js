@@ -117,16 +117,30 @@ if (typeof hasAlreadyBeenDecleared === 'undefined') {
             articleNode = articleNode.parentNode;
         }
         let aTagsInArticle = articleNode.querySelectorAll('header a');
-        let usernameObj = aTagsInArticle[1];
+        let usernameObj;
+        for (let i = 0; i < aTagsInArticle.length; i++) {
+            if (aTagsInArticle[i].innerText.length > 1) {
+                usernameObj = aTagsInArticle[i];
+                break;
+            }
+        }
 
         if (request.target === 'img') {
             const imgNode =
                 lastContextMenuClick.parentNode.childNodes[0].childNodes[0];
             if (imgNode.nodeName === 'IMG') {
-                const srcArray =
-                    imgNode.attributes['srcset'].textContent.split(' ');
-                const srcToDownload =
-                    srcArray[srcArray.length - 2].split(',')[1];
+                let srcToDownload;
+                // If the img has a set of srcs take the largest otherwiese only take the src
+                if (imgNode.attributes['srcset']) {
+                    const srcArray =
+                        imgNode.attributes['srcset'].textContent.split(' ');
+                    srcToDownload = srcArray[srcArray.length - 2].split(',')[1];
+                    console.log('srcset', srcToDownload);
+                } else {
+                    srcToDownload = imgNode.attributes['src'].textContent;
+                    console.log('src', srcToDownload);
+                }
+
                 sendResponse({
                     success: true,
                     url: srcToDownload,
