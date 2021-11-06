@@ -132,13 +132,32 @@ if (typeof hasAlreadyBeenDecleared === 'undefined') {
                 let srcToDownload;
                 // If the img has a set of srcs take the largest otherwiese only take the src
                 if (imgNode.attributes['srcset']) {
-                    const srcArray =
-                        imgNode.attributes['srcset'].textContent.split(' ');
-                    srcToDownload = srcArray[srcArray.length - 2].split(',')[1];
-                    console.log('srcset', srcToDownload);
+                    // Parse srcset
+                    const srcArrayRaw =
+                        imgNode.attributes['srcset'].textContent.split(',');
+                    const srcArray = [];
+                    srcArrayRaw.forEach((src) => {
+                        const parts = src.split(' ');
+                        srcArray.push({
+                            url: parts[0],
+                            width: parseInt(parts[1]),
+                        });
+                    });
+
+                    // Sort by width desc
+                    srcArray.sort((a, b) => {
+                        return b.width - a.width;
+                    });
+
+                    // Download largest
+                    console.log(
+                        'Download from srcset with width: ',
+                        srcArray[0].width
+                    );
+                    srcToDownload = srcArray[0].url;
                 } else {
                     srcToDownload = imgNode.attributes['src'].textContent;
-                    console.log('src', srcToDownload);
+                    console.log('Download from src: ', srcToDownload);
                 }
 
                 sendResponse({
