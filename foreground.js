@@ -173,7 +173,7 @@ if (typeof hasAlreadyBeenDecleared === 'undefined') {
 
             let tOfScripts = 0;
             for (; tOfScripts < allScriptsArray.length; tOfScripts++) {
-                if (allScriptsArray[tOfScripts].innerText.includes('.mp4')) {
+                if (allScriptsArray[tOfScripts].innerText.includes('.webm')) {
                     break;
                 }
             }
@@ -183,7 +183,7 @@ if (typeof hasAlreadyBeenDecleared === 'undefined') {
 
             let tOfParts = 0;
             for (; tOfParts < innerParts.length; tOfParts++) {
-                if (innerParts[tOfParts].includes('.mp4')) {
+                if (innerParts[tOfParts].includes('.webm')) {
                     break;
                 }
             }
