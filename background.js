@@ -5,7 +5,7 @@ chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
         tab.url.startsWith('https://www.instagram.com')
     ) {
         chrome.tabs.executeScript(tabId, { file: 'foreground.js' }, () => {
-            //   console.log("injected");
+            // Injected
         });
         chrome.tabs.insertCSS(tabId, { file: 'insta.css' });
     }
