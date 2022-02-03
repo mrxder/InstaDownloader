@@ -11,18 +11,33 @@ chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
     }
 });
 
+let urlsDownloaded = new Set();
+
 // Downloader
 const processDownloadMessage = (msg) => {
     if (msg.success) {
-        const urlObj = new URL(msg.url);
-        const urlPathArray = urlObj.pathname.split('/');
-        const fileName = urlPathArray[urlPathArray.length - 1];
-        console.log(msg.username);
+        // This prevents that the same url gets downloaded multiple times
+        // This behavior can occure when the fontent/content script is injected
+        // multiple times. That happens when react navigates to a new page.
+        const alreadyDownloaded = urlsDownloaded.has(msg.url);
+        urlsDownloaded.add(msg.url);
+        setTimeout(() => {
+            urlsDownloaded.delete(msg.url);
+        }, 1000);
 
-        chrome.downloads.download({
-            url: msg.url,
-            filename: msg.username + '_' + fileName,
-        });
+        if (!alreadyDownloaded) {
+            const urlObj = new URL(msg.url);
+            const urlPathArray = urlObj.pathname.split('/');
+            const fileName = urlPathArray[urlPathArray.length - 1];
+            console.log(msg.username);
+
+            chrome.downloads.download({
+                url: msg.url,
+                filename: msg.username + '_' + fileName,
+            });
+        } else {
+            console.log('Already downloaded');
+        }
     } else {
         console.log(msg);
     }
