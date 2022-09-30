@@ -15,6 +15,7 @@ if (typeof hasAlreadyBeenDecleared === 'undefined') {
         return userName;
     };
     const getImgUrlFromStory = (imgNode) => {
+        console.log(imgNode);
         const srcArray = imgNode.attributes['srcset'].textContent.split(' ');
         const srcToDownload = srcArray[0];
         return srcToDownload;
