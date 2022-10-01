@@ -1,13 +1,36 @@
+let lastVideoUrl = undefined;
+
 // Inject
 chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
     if (
         changeInfo.status == 'complete' &&
         tab.url.startsWith('https://www.instagram.com')
     ) {
-        chrome.tabs.executeScript(tabId, { file: 'foreground.js' }, () => {
-            // Injected
+        console.log('Injecting content script');
+        chrome.scripting.executeScript({
+            target: { tabId: tabId, allFrames: true },
+            files: ['foreground.js'],
         });
-        chrome.tabs.insertCSS(tabId, { file: 'insta.css' });
+
+        chrome.scripting.insertCSS({
+            target: { tabId: tabId },
+            files: ['insta.css'],
+        });
+
+        // Save last downloaded video url
+        chrome.webRequest.onCompleted.addListener(
+            (details) => {
+                if (
+                    details.url.includes('cdninstagram') &&
+                    details.url.includes('mp4')
+                ) {
+                    const bytesStartIndex = details.url.indexOf('&bytestart');
+                    const url = details.url.substring(0, bytesStartIndex);
+                    lastVideoUrl = url;
+                }
+            },
+            { tabId: tabId, urls: ['<all_urls>'] }
+        );
     }
 });
 
@@ -16,6 +39,15 @@ let urlsDownloaded = new Set();
 // Downloader
 const processDownloadMessage = (msg) => {
     if (msg.success) {
+        if (msg.downloadFromNetwork) {
+            if (lastVideoUrl) {
+                msg.url = lastVideoUrl;
+            } else {
+                console.warn('No video url found in network requests');
+                return;
+            }
+        }
+
         // This prevents that the same url gets downloaded multiple times
         // This behavior can occure when the fontent/content script is injected
         // multiple times. That happens when react navigates to a new page.
@@ -28,7 +60,13 @@ const processDownloadMessage = (msg) => {
         if (!alreadyDownloaded) {
             const urlObj = new URL(msg.url);
             const urlPathArray = urlObj.pathname.split('/');
-            const fileName = urlPathArray[urlPathArray.length - 1];
+
+            let fileName = 'error';
+            if (msg.fileName) {
+                fileName = msg.fileName;
+            } else {
+                fileName = urlPathArray[urlPathArray.length - 1];
+            }
             console.log(msg.username);
 
             chrome.downloads.download({
