@@ -15,11 +15,17 @@ if (typeof hasAlreadyBeenDecleared === 'undefined') {
         return userName;
     };
     const getImgUrlFromStory = (imgNode) => {
+        console.log(imgNode);
         const srcArray = imgNode.attributes['srcset'].textContent.split(' ');
         const srcToDownload = srcArray[0];
         return srcToDownload;
     };
 
+    /**
+     * @deprecated
+     * @param {*} videoNode
+     * @returns
+     */
     const getVideoUrlFromStory = (videoNode) => {
         return videoNode.childNodes[0].attributes['src'].textContent;
     };
@@ -30,11 +36,11 @@ if (typeof hasAlreadyBeenDecleared === 'undefined') {
         const userName = getUserNameOfStory();
 
         if (videoObj) {
-            const videoUrl = getVideoUrlFromStory(videoObj);
+            //const videoUrl = getVideoUrlFromStory(videoObj);
 
             chrome.runtime.sendMessage({
                 success: true,
-                url: videoUrl,
+                downloadFromNetwork: true,
                 username: userName,
             });
         } else if (imgObj) {
@@ -50,9 +56,12 @@ if (typeof hasAlreadyBeenDecleared === 'undefined') {
 
     const clickOnDownloadImgStory = () => {
         const imgObj = document.querySelector('section section img');
+        const videoObj = document.querySelector('section section video');
         const userName = getUserNameOfStory();
 
-        if (imgObj) {
+        if (videoObj) {
+            downloadFristFrameOfVide(videoObj, userName);
+        } else if (imgObj) {
             const imgUrl = getImgUrlFromStory(imgObj);
 
             chrome.runtime.sendMessage({
@@ -73,15 +82,14 @@ if (typeof hasAlreadyBeenDecleared === 'undefined') {
                 )
             ) {
                 // Download Orig
-
                 if (oldDownOrigBtn == null) {
                     const downloadBtn = document.createElement('BUTTON');
                     downloadBtn.innerHTML = 'Download Orig';
                     downloadBtn.id = 'story-down-orig';
                     downloadBtn.onclick = clickOnDownloadOriginalStory;
                     document.body.appendChild(downloadBtn);
+                    console.log('Added download button', downloadBtn);
                 }
-
                 // Download Img
 
                 if (oldDownImgBtn == null) {
@@ -132,6 +140,35 @@ if (typeof hasAlreadyBeenDecleared === 'undefined') {
     document.addEventListener('contextmenu', (e) => {
         lastContextMenuClick = e.target;
     });
+
+    const downloadFristFrameOfVide = (videoObj, userName) => {
+        let canvas = document.createElement('canvas');
+        let image = '';
+
+        videoObj.addEventListener('seeked', function () {
+            canvas.width = videoObj.offsetWidth * 10;
+            canvas.height = videoObj.offsetHeight * 10;
+
+            console.log(videoObj.offsetWidth);
+            console.log(videoObj.offsetHeight);
+
+            let ctx = canvas.getContext('2d');
+            ctx.drawImage(videoObj, 0, 0, canvas.width, canvas.height);
+
+            image = canvas.toDataURL('image/jpeg');
+
+            const actualHrefParts = window.location.href.split('/');
+
+            chrome.runtime.sendMessage({
+                success: true,
+                url: image,
+                fileName: actualHrefParts[actualHrefParts.length - 2] + '.jpg',
+                username: userName,
+            });
+        });
+
+        videoObj.currentTime = 0.1;
+    };
 
     const handleNormalDownload = (request, sender, sendResponse) => {
         if (request.target) {
