@@ -30,10 +30,20 @@ if (typeof hasAlreadyBeenDecleared === 'undefined') {
         return videoNode.childNodes[0].attributes['src'].textContent;
     };
 
-    const clickOnDownloadOriginalStory = () => {
+    const getObjectsFromStory = () => {
         const imgObj = document.querySelector('section section img');
         const videoObj = document.querySelector('section section video');
         const userName = getUserNameOfStory();
+
+        return {
+            imgObj,
+            videoObj,
+            userName,
+        };
+    };
+
+    const clickOnDownloadOriginalStory = () => {
+        const { imgObj, videoObj, userName } = getObjectsFromStory();
 
         if (videoObj) {
             //const videoUrl = getVideoUrlFromStory(videoObj);
@@ -55,12 +65,10 @@ if (typeof hasAlreadyBeenDecleared === 'undefined') {
     };
 
     const clickOnDownloadImgStory = () => {
-        const imgObj = document.querySelector('section section img');
-        const videoObj = document.querySelector('section section video');
-        const userName = getUserNameOfStory();
+        const { imgObj, videoObj, userName } = getObjectsFromStory();
 
         if (videoObj) {
-            downloadFristFrameOfVide(videoObj, userName);
+            downloadFrameOfVide(videoObj, userName, 0.1);
         } else if (imgObj) {
             const imgUrl = getImgUrlFromStory(imgObj);
 
@@ -72,10 +80,22 @@ if (typeof hasAlreadyBeenDecleared === 'undefined') {
         }
     };
 
+    const clickOnDownloadImgStoryPos = () => {
+        const { imgObj, videoObj, userName } = getObjectsFromStory();
+
+        if (videoObj) {
+            downloadFrameOfVide(videoObj, userName);
+        } else if (imgObj) {
+            clickOnDownloadImgStory();
+        }
+    };
+
     document.addEventListener('click', (e) => {
         setTimeout(() => {
             const oldDownOrigBtn = document.getElementById('story-down-orig');
             const oldDownImgBtn = document.getElementById('story-down-img');
+            const oldDownImgBtnPos =
+                document.getElementById('story-down-img-pos');
             if (
                 window.location.href.startsWith(
                     'https://www.instagram.com/stories/'
@@ -99,6 +119,15 @@ if (typeof hasAlreadyBeenDecleared === 'undefined') {
                     downloadBtn.onclick = clickOnDownloadImgStory;
                     document.body.appendChild(downloadBtn);
                 }
+
+                // Download Video at current pos
+                if (oldDownImgBtnPos == null) {
+                    const downloadBtn = document.createElement('BUTTON');
+                    downloadBtn.innerHTML = 'Snapshot';
+                    downloadBtn.id = 'story-down-img-pos';
+                    downloadBtn.onclick = clickOnDownloadImgStoryPos;
+                    document.body.appendChild(downloadBtn);
+                }
             } else {
                 if (oldDownOrigBtn) {
                     oldDownOrigBtn.parentNode.removeChild(oldDownOrigBtn);
@@ -106,6 +135,10 @@ if (typeof hasAlreadyBeenDecleared === 'undefined') {
 
                 if (oldDownImgBtn) {
                     oldDownImgBtn.parentNode.removeChild(oldDownImgBtn);
+                }
+
+                if (oldDownImgBtnPos) {
+                    oldDownImgBtnPos.parentNode.removeChild(oldDownImgBtnPos);
                 }
             }
         }, 100);
@@ -141,11 +174,9 @@ if (typeof hasAlreadyBeenDecleared === 'undefined') {
         lastContextMenuClick = e.target;
     });
 
-    const downloadFristFrameOfVide = (videoObj, userName) => {
-        let canvas = document.createElement('canvas');
-        let image = '';
-
-        videoObj.addEventListener('seeked', function () {
+    const downloadFrameOfVide = (videoObj, userName, pos = undefined) => {
+        const generateFrame = (videoObj) => {
+            let canvas = document.createElement('canvas');
             canvas.width = videoObj.offsetWidth * 10;
             canvas.height = videoObj.offsetHeight * 10;
 
@@ -155,19 +186,41 @@ if (typeof hasAlreadyBeenDecleared === 'undefined') {
             let ctx = canvas.getContext('2d');
             ctx.drawImage(videoObj, 0, 0, canvas.width, canvas.height);
 
-            image = canvas.toDataURL('image/jpeg');
+            return {
+                image: canvas.toDataURL('image/jpeg'),
+                currentTime: videoObj.currentTime,
+            };
+        };
+
+        if (pos) {
+            videoObj.addEventListener('seeked', function () {
+                const image = generateFrame(videoObj).image;
+
+                const actualHrefParts = window.location.href.split('/');
+                chrome.runtime.sendMessage({
+                    success: true,
+                    url: image,
+                    fileName:
+                        actualHrefParts[actualHrefParts.length - 2] + '.jpg',
+                    username: userName,
+                });
+            });
+            videoObj.currentTime = pos;
+        } else {
+            const image = generateFrame(videoObj);
 
             const actualHrefParts = window.location.href.split('/');
-
             chrome.runtime.sendMessage({
                 success: true,
-                url: image,
-                fileName: actualHrefParts[actualHrefParts.length - 2] + '.jpg',
+                url: image.image,
+                fileName:
+                    actualHrefParts[actualHrefParts.length - 2] +
+                    '_' +
+                    image.currentTime +
+                    '.jpg',
                 username: userName,
             });
-        });
-
-        videoObj.currentTime = 0.1;
+        }
     };
 
     const handleNormalDownload = (request, sender, sendResponse) => {
