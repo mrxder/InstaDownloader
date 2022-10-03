@@ -1,5 +1,6 @@
 #story-down-orig,
-#story-down-img {
+#story-down-img,
+#story-down-img-pos {
     position: absolute;
     top: 0;
     font-size: 40%;
@@ -13,4 +14,7 @@
 }
 #story-down-img {
     left: 60px;
+}
+#story-down-img-pos {
+    left: 120px;
 }
