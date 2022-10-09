@@ -2,6 +2,56 @@ window.oncontextmenu = null;
 
 if (typeof hasAlreadyBeenDecleared === 'undefined') {
     const hasAlreadyBeenDecleared = true;
+
+    const downloadFrameOfVide = (videoObj, userName, pos = undefined) => {
+        const generateFrame = (videoObj) => {
+            let canvas = document.createElement('canvas');
+            canvas.width = videoObj.offsetWidth * 10;
+            canvas.height = videoObj.offsetHeight * 10;
+
+            console.log(videoObj.offsetWidth);
+            console.log(videoObj.offsetHeight);
+
+            let ctx = canvas.getContext('2d');
+            ctx.drawImage(videoObj, 0, 0, canvas.width, canvas.height);
+
+            return {
+                image: canvas.toDataURL('image/jpeg'),
+                currentTime: videoObj.currentTime,
+            };
+        };
+
+        if (pos) {
+            videoObj.addEventListener('seeked', function () {
+                const image = generateFrame(videoObj).image;
+
+                const actualHrefParts = window.location.href.split('/');
+                chrome.runtime.sendMessage({
+                    success: true,
+                    url: image,
+                    fileName:
+                        actualHrefParts[actualHrefParts.length - 2] + '.jpg',
+                    username: userName,
+                });
+            });
+            videoObj.currentTime = pos;
+        } else {
+            const image = generateFrame(videoObj);
+
+            const actualHrefParts = window.location.href.split('/');
+            chrome.runtime.sendMessage({
+                success: true,
+                url: image.image,
+                fileName:
+                    actualHrefParts[actualHrefParts.length - 2] +
+                    '_' +
+                    image.currentTime +
+                    '.jpg',
+                username: userName,
+            });
+        }
+    };
+
     // Stories
     const getUserNameOfStory = () => {
         const hrefOfProfilePic = document
@@ -174,55 +224,6 @@ if (typeof hasAlreadyBeenDecleared === 'undefined') {
         lastContextMenuClick = e.target;
     });
 
-    const downloadFrameOfVide = (videoObj, userName, pos = undefined) => {
-        const generateFrame = (videoObj) => {
-            let canvas = document.createElement('canvas');
-            canvas.width = videoObj.offsetWidth * 10;
-            canvas.height = videoObj.offsetHeight * 10;
-
-            console.log(videoObj.offsetWidth);
-            console.log(videoObj.offsetHeight);
-
-            let ctx = canvas.getContext('2d');
-            ctx.drawImage(videoObj, 0, 0, canvas.width, canvas.height);
-
-            return {
-                image: canvas.toDataURL('image/jpeg'),
-                currentTime: videoObj.currentTime,
-            };
-        };
-
-        if (pos) {
-            videoObj.addEventListener('seeked', function () {
-                const image = generateFrame(videoObj).image;
-
-                const actualHrefParts = window.location.href.split('/');
-                chrome.runtime.sendMessage({
-                    success: true,
-                    url: image,
-                    fileName:
-                        actualHrefParts[actualHrefParts.length - 2] + '.jpg',
-                    username: userName,
-                });
-            });
-            videoObj.currentTime = pos;
-        } else {
-            const image = generateFrame(videoObj);
-
-            const actualHrefParts = window.location.href.split('/');
-            chrome.runtime.sendMessage({
-                success: true,
-                url: image.image,
-                fileName:
-                    actualHrefParts[actualHrefParts.length - 2] +
-                    '_' +
-                    image.currentTime +
-                    '.jpg',
-                username: userName,
-            });
-        }
-    };
-
     const handleNormalDownload = (request, sender, sendResponse) => {
         if (request.target) {
             let articleNode = lastContextMenuClick;
@@ -291,40 +292,47 @@ if (typeof hasAlreadyBeenDecleared === 'undefined') {
                     sendResponse({ success: false });
                 }
             } else if (request.target === 'video') {
-                const allScriptsArray = document.querySelectorAll('script');
-
-                let tOfScripts = 0;
-                for (; tOfScripts < allScriptsArray.length; tOfScripts++) {
-                    if (
-                        allScriptsArray[tOfScripts].innerText.includes('.webm')
-                    ) {
-                        break;
-                    }
-                }
-
-                const innerParts =
-                    allScriptsArray[tOfScripts].innerText.split('BaseURL');
-
-                let tOfParts = 0;
-                for (; tOfParts < innerParts.length; tOfParts++) {
-                    if (innerParts[tOfParts].includes('.webm')) {
-                        break;
-                    }
-                }
-
-                let targetPart = innerParts[tOfParts];
-                targetPart = targetPart.replace(/.u0026amp./gi, '&');
-                const urlStartsAt = targetPart.indexOf('https:');
-                targetPart = targetPart.substring(
-                    urlStartsAt,
-                    targetPart.length - 7
-                );
-
-                sendResponse({
+                chrome.runtime.sendMessage({
                     success: true,
-                    url: targetPart,
+                    downloadFromNetwork: true,
                     username: usernameObj.innerText,
                 });
+
+                // Deprecated because of the new way of downloading videos
+                // const allScriptsArray = document.querySelectorAll('script');
+
+                // let tOfScripts = 0;
+                // for (; tOfScripts < allScriptsArray.length; tOfScripts++) {
+                //     if (
+                //         allScriptsArray[tOfScripts].innerText.includes('.webm')
+                //     ) {
+                //         break;
+                //     }
+                // }
+
+                // const innerParts =
+                //     allScriptsArray[tOfScripts].innerText.split('BaseURL');
+
+                // let tOfParts = 0;
+                // for (; tOfParts < innerParts.length; tOfParts++) {
+                //     if (innerParts[tOfParts].includes('.webm')) {
+                //         break;
+                //     }
+                // }
+
+                // let targetPart = innerParts[tOfParts];
+                // targetPart = targetPart.replace(/.u0026amp./gi, '&');
+                // const urlStartsAt = targetPart.indexOf('https:');
+                // targetPart = targetPart.substring(
+                //     urlStartsAt,
+                //     targetPart.length - 7
+                // );
+
+                // sendResponse({
+                //     success: true,
+                //     url: targetPart,
+                //     username: usernameObj.innerText,
+                // });
             }
         }
     };
