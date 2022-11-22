@@ -68,6 +68,7 @@ if (typeof hasAlreadyBeenDecleared === 'undefined') {
         console.log(imgNode);
         const srcArray = imgNode.attributes['srcset'].textContent.split(' ');
         const srcToDownload = srcArray[0];
+        console.log(srcToDownload);
         return srcToDownload;
     };
 
@@ -105,7 +106,6 @@ if (typeof hasAlreadyBeenDecleared === 'undefined') {
             });
         } else if (imgObj) {
             const imgUrl = getImgUrlFromStory(imgObj);
-
             chrome.runtime.sendMessage({
                 success: true,
                 url: imgUrl,

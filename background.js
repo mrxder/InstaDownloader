@@ -25,8 +25,12 @@ chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
                     details.url.includes('mp4')
                 ) {
                     const bytesStartIndex = details.url.indexOf('&bytestart');
-                    const url = details.url.substring(0, bytesStartIndex);
-                    lastVideoUrl = url;
+                    if (bytesStartIndex > 0) {
+                        const url = details.url.substring(0, bytesStartIndex);
+                        lastVideoUrl = url;
+                    } else {
+                        lastVideoUrl = details.url;
+                    }
                 }
             },
             { tabId: tabId, urls: ['<all_urls>'] }
@@ -91,34 +95,38 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 
 // Normal
 
-const idImg = chrome.contextMenus.create({
-    title: 'Download this Img',
-    contexts: ['all'],
-    id: 'downloadImg',
-});
+try {
+    const idImg = chrome.contextMenus.create({
+        title: 'Download this Img',
+        contexts: ['all'],
+        id: 'downloadImg',
+    });
 
-const idVid = chrome.contextMenus.create({
-    title: 'Download this Video',
-    contexts: ['all'],
-    id: 'downloadVideo',
-});
+    const idVid = chrome.contextMenus.create({
+        title: 'Download this Video',
+        contexts: ['all'],
+        id: 'downloadVideo',
+    });
 
-chrome.contextMenus.onClicked.addListener((menuItem, tab) => {
-    if (
-        menuItem.pageUrl === 'https://www.instagram.com/' ||
-        menuItem.pageUrl.startsWith('https://www.instagram.com/p/')
-    ) {
-        let target = undefined;
-        if (menuItem.menuItemId === 'downloadImg') {
-            target = 'img';
-        } else if (menuItem.menuItemId === 'downloadVideo') {
-            target = 'video';
+    chrome.contextMenus.onClicked.addListener((menuItem, tab) => {
+        if (
+            menuItem.pageUrl === 'https://www.instagram.com/' ||
+            menuItem.pageUrl.startsWith('https://www.instagram.com/p/')
+        ) {
+            let target = undefined;
+            if (menuItem.menuItemId === 'downloadImg') {
+                target = 'img';
+            } else if (menuItem.menuItemId === 'downloadVideo') {
+                target = 'video';
+            }
+
+            if (target) {
+                chrome.tabs.sendMessage(tab.id, { target: target }, (resp) => {
+                    processDownloadMessage(resp);
+                });
+            }
         }
-
-        if (target) {
-            chrome.tabs.sendMessage(tab.id, { target: target }, (resp) => {
-                processDownloadMessage(resp);
-            });
-        }
-    }
-});
+    });
+} catch (e) {
+    console.log(e);
+}
