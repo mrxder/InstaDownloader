@@ -201,13 +201,13 @@ if (typeof hasAlreadyBeenDecleared === 'undefined') {
     // Keybord short cut start
     let isDPressed = false;
     document.addEventListener('keydown', (e) => {
-        if (e.key === 'd') {
+        if (e.key === 'y') {
             isDPressed = true;
         }
     });
 
     document.addEventListener('keyup', (e) => {
-        if (e.key === 'd') {
+        if (e.key === 'y') {
             isDPressed = false;
         }
     });
@@ -227,10 +227,20 @@ if (typeof hasAlreadyBeenDecleared === 'undefined') {
     const handleNormalDownload = (request, sender, sendResponse) => {
         if (request.target) {
             let articleNode = lastContextMenuClick;
-            while (articleNode.nodeName !== 'ARTICLE') {
+            /**
+             * If images are shown over the profile the pic
+             * is inside an article tag
+             * If the image is shown in a separate page the pic
+             * is inside a section tag
+             */
+            while (
+                articleNode &&
+                articleNode.nodeName !== 'ARTICLE' &&
+                articleNode.nodeName !== 'SECTION'
+            ) {
                 articleNode = articleNode.parentNode;
             }
-            let aTagsInArticle = articleNode.querySelectorAll('header a');
+            let aTagsInArticle = articleNode.querySelectorAll('a');
             let usernameObj;
             for (let i = 0; i < aTagsInArticle.length; i++) {
                 if (aTagsInArticle[i].innerText.length > 1) {
