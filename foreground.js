@@ -53,9 +53,17 @@ if (typeof hasAlreadyBeenDecleared === 'undefined') {
     };
 
     // Stories
+    const isObjVisible = (obj) => {
+        if (obj.offsetWidth > 100 && obj.offsetHeight > 100) {
+            return true;
+        } else {
+            return false;
+        }
+    };
+
     const getUserNameOfStory = () => {
         const hrefOfProfilePic = document
-            .querySelector('header a')
+            .querySelector('a')
             .getAttribute('href');
         const userName = hrefOfProfilePic.substring(
             1,
@@ -65,11 +73,51 @@ if (typeof hasAlreadyBeenDecleared === 'undefined') {
         return userName;
     };
     const getImgUrlFromStory = (imgNode) => {
-        console.log(imgNode);
-        const srcArray = imgNode.attributes['srcset'].textContent.split(' ');
-        const srcToDownload = srcArray[0];
+        let srcToDownload;
+
+        // The srcset attribute seems to be legacy by instagram
+        if (imgNode.attributes['srcset']) {
+            const srcArray =
+                imgNode.attributes['srcset'].textContent.split(' ');
+            srcToDownload = srcArray[0];
+        }
+
+        if (!srcToDownload) {
+            srcToDownload = imgNode.attributes['src'].textContent;
+        }
+
         console.log(srcToDownload);
         return srcToDownload;
+    };
+
+    const getImgObjFromStory = () => {
+        let imgObj = document.querySelector('section section img');
+        // When a story is shown within a profile only one section is shown
+        if (!imgObj) {
+            const allImgObj = document.querySelectorAll('img');
+            for (let i = 0; i < allImgObj.length; i++) {
+                if (isObjVisible(allImgObj[i])) {
+                    imgObj = allImgObj[i];
+                    break;
+                }
+            }
+        }
+        return imgObj;
+    };
+
+    const getVideoObjFromStory = () => {
+        let videoObj = document.querySelector('section section video');
+        // When a story is shown within a profile only one section is shown
+        if (!videoObj) {
+            const allVideoObj = document.querySelectorAll('video');
+            for (let i = 0; i < allVideoObj.length; i++) {
+                if (isObjVisible(allVideoObj[i])) {
+                    videoObj = allVideoObj[i];
+                    break;
+                }
+            }
+        }
+        return videoObj;
     };
 
     /**
@@ -82,8 +130,8 @@ if (typeof hasAlreadyBeenDecleared === 'undefined') {
     };
 
     const getObjectsFromStory = () => {
-        const imgObj = document.querySelector('section section img');
-        const videoObj = document.querySelector('section section video');
+        const imgObj = getImgObjFromStory();
+        const videoObj = getVideoObjFromStory();
         const userName = getUserNameOfStory();
 
         return {
@@ -95,6 +143,8 @@ if (typeof hasAlreadyBeenDecleared === 'undefined') {
 
     const clickOnDownloadOriginalStory = () => {
         const { imgObj, videoObj, userName } = getObjectsFromStory();
+
+        console.log('clickOnDownloadOriginalStory', imgObj, videoObj, userName);
 
         if (videoObj) {
             //const videoUrl = getVideoUrlFromStory(videoObj);
@@ -117,6 +167,8 @@ if (typeof hasAlreadyBeenDecleared === 'undefined') {
     const clickOnDownloadImgStory = () => {
         const { imgObj, videoObj, userName } = getObjectsFromStory();
 
+        console.log('clickOnDownloadImgStory', imgObj, videoObj, userName);
+
         if (videoObj) {
             downloadFrameOfVide(videoObj, userName, 0.1);
         } else if (imgObj) {
@@ -132,6 +184,8 @@ if (typeof hasAlreadyBeenDecleared === 'undefined') {
 
     const clickOnDownloadImgStoryPos = () => {
         const { imgObj, videoObj, userName } = getObjectsFromStory();
+
+        console.log('clickOnDownloadImgStoryPos', imgObj, videoObj, userName);
 
         if (videoObj) {
             downloadFrameOfVide(videoObj, userName);
@@ -156,6 +210,7 @@ if (typeof hasAlreadyBeenDecleared === 'undefined') {
                     const downloadBtn = document.createElement('BUTTON');
                     downloadBtn.innerHTML = 'Download Orig';
                     downloadBtn.id = 'story-down-orig';
+                    downloadBtn.className = 'insta-down-btn';
                     downloadBtn.onclick = clickOnDownloadOriginalStory;
                     document.body.appendChild(downloadBtn);
                     console.log('Added download button', downloadBtn);
@@ -166,6 +221,7 @@ if (typeof hasAlreadyBeenDecleared === 'undefined') {
                     const downloadBtn = document.createElement('BUTTON');
                     downloadBtn.innerHTML = 'Download img';
                     downloadBtn.id = 'story-down-img';
+                    downloadBtn.className = 'insta-down-btn';
                     downloadBtn.onclick = clickOnDownloadImgStory;
                     document.body.appendChild(downloadBtn);
                 }
@@ -175,6 +231,7 @@ if (typeof hasAlreadyBeenDecleared === 'undefined') {
                     const downloadBtn = document.createElement('BUTTON');
                     downloadBtn.innerHTML = 'Snapshot';
                     downloadBtn.id = 'story-down-img-pos';
+                    downloadBtn.className = 'insta-down-btn';
                     downloadBtn.onclick = clickOnDownloadImgStoryPos;
                     document.body.appendChild(downloadBtn);
                 }
@@ -243,9 +300,17 @@ if (typeof hasAlreadyBeenDecleared === 'undefined') {
             let aTagsInArticle = articleNode.querySelectorAll('a');
             let usernameObj;
             for (let i = 0; i < aTagsInArticle.length; i++) {
-                if (aTagsInArticle[i].innerText.length > 1) {
-                    usernameObj = aTagsInArticle[i];
-                    break;
+                // The username we are looking for does not have a background color, this prevents to pick the usernames linked on an image
+                if (aTagsInArticle[i] instanceof Element) {
+                    const style = window.getComputedStyle(aTagsInArticle[i]);
+                    const bgColor = style.backgroundColor;
+                    if (
+                        aTagsInArticle[i].innerText.length > 1 &&
+                        bgColor === 'rgba(0, 0, 0, 0)'
+                    ) {
+                        usernameObj = aTagsInArticle[i];
+                        break;
+                    }
                 }
             }
 

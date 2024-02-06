@@ -18,3 +18,7 @@
 #story-down-img-pos {
     left: 120px;
 }
+.insta-down-btn {
+    z-index: 1000;
+    cursor: pointer;
+}
