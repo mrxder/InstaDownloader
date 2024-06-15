@@ -4,6 +4,7 @@ if (typeof hasAlreadyBeenDecleared === 'undefined') {
     const hasAlreadyBeenDecleared = true;
 
     const downloadFrameOfVide = (videoObj, userName, pos = undefined) => {
+        console.log('downloadFrameOfVide', videoObj, userName, pos);
         const generateFrame = (videoObj) => {
             let canvas = document.createElement('canvas');
             canvas.width = videoObj.offsetWidth * 10;
@@ -52,6 +53,24 @@ if (typeof hasAlreadyBeenDecleared === 'undefined') {
         }
     };
 
+    /**
+     * Start from node and query in each parent for the querySelector
+     * In other words, DFS starting from the node up to the root
+     * @param {*} node
+     * @param {*} querySelector
+     * @returns the first node that matches the querySelector or undefined
+     */
+    const findInParents = (node, querySelector) => {
+        let currentNode = node;
+        while (currentNode) {
+            if (currentNode.querySelector(querySelector)) {
+                return currentNode.querySelector(querySelector);
+            }
+            currentNode = currentNode.parentNode;
+        }
+        return undefined;
+    };
+
     // Stories
     const isObjVisible = (obj) => {
         if (obj.offsetWidth > 100 && obj.offsetHeight > 100) {
@@ -62,9 +81,9 @@ if (typeof hasAlreadyBeenDecleared === 'undefined') {
     };
 
     const getUserNameOfStory = () => {
-        const hrefOfProfilePic = document
-            .querySelector('a')
-            .getAttribute('href');
+        const elMenuSvg = document.querySelector('svg[aria-label="Menu"]');
+        const elAOfProfilePic = findInParents(elMenuSvg, 'a');
+        const hrefOfProfilePic = elAOfProfilePic.getAttribute('href');
         const userName = hrefOfProfilePic.substring(
             1,
             hrefOfProfilePic.length - 1
