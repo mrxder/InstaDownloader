@@ -60,13 +60,16 @@ if (typeof hasAlreadyBeenDecleared === 'undefined') {
      * @param {*} querySelector
      * @returns the first node that matches the querySelector or undefined
      */
-    const findInParents = (node, querySelector) => {
+    const findInParents = (node, querySelector, maxLayersAbove = 10) => {
         let currentNode = node;
-        while (currentNode) {
+        let layersAbove = 0;
+        while (currentNode && layersAbove < maxLayersAbove) {
             if (currentNode.querySelector(querySelector)) {
+                console.log('Found in parents, layers above: ', layersAbove);
                 return currentNode.querySelector(querySelector);
             }
             currentNode = currentNode.parentNode;
+            layersAbove++;
         }
         return undefined;
     };
@@ -110,33 +113,23 @@ if (typeof hasAlreadyBeenDecleared === 'undefined') {
     };
 
     const getImgObjFromStory = () => {
-        let imgObj = document.querySelector('section section img');
-        // When a story is shown within a profile only one section is shown
-        if (!imgObj) {
-            const allImgObj = document.querySelectorAll('img');
-            for (let i = 0; i < allImgObj.length; i++) {
-                if (isObjVisible(allImgObj[i])) {
-                    imgObj = allImgObj[i];
-                    break;
-                }
-            }
-        }
-        return imgObj;
+        const elMenuSvg = document.querySelector('svg[aria-label="Menu"]');
+        const elImgOfStory = findInParents(
+            elMenuSvg,
+            'div > img',
+            (maxLayersAbove = 9)
+        );
+        return elImgOfStory;
     };
 
     const getVideoObjFromStory = () => {
-        let videoObj = document.querySelector('section section video');
-        // When a story is shown within a profile only one section is shown
-        if (!videoObj) {
-            const allVideoObj = document.querySelectorAll('video');
-            for (let i = 0; i < allVideoObj.length; i++) {
-                if (isObjVisible(allVideoObj[i])) {
-                    videoObj = allVideoObj[i];
-                    break;
-                }
-            }
-        }
-        return videoObj;
+        const elMenuSvg = document.querySelector('svg[aria-label="Menu"]');
+        const elVideoOfStory = findInParents(
+            elMenuSvg,
+            'video',
+            (maxLayersAbove = 9)
+        );
+        return elVideoOfStory;
     };
 
     /**
